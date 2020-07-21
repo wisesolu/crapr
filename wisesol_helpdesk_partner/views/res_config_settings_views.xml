@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="res_config_settings_view_form" model="ir.ui.view">
+            <field name="name">res.config.settings.view.form.inherit.wisesolutions</field>
+            <field name="model">res.config.settings</field>
+            <field name="priority" eval="47"/>
+            <field name="inherit_id" ref="base_setup.res_config_settings_view_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//div[@id='invite_users']" position="before">
+                    <div id="voip_setting">
+                        <h2>VOIP Settings</h2>
+                        <div class="row mt16 o_settings_container">
+                            <div class="col-12 col-lg-6 o_setting_box">
+                                <div class="o_setting_right_pane">
+                                    <span class="o_form_label">VOIP Email</span>
+                                    <div class="text-muted">
+                                        Email that's searched for in helpdesk tickets
+                                    </div>
+                                    <div class="content-group">
+                                        <div class="mt16 row">
+                                            <label for="voip_email" string="VOIP Email" class="col-3 col-lg-3 o_light_label"/>
+                                            <field name="voip_email" class="oe_inline"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 col-lg-6 o_setting_box">
+                                <div class="o_setting_right_pane">
+                                    <span class="o_form_label">Helpdesk Team</span>
+                                    <div class="text-muted">
+                                        Group of tickets that are created from VOIP missed calls
+                                    </div>
+                                    <div class="content-group">
+                                        <div class="mt16" groups="base.group_no_one">
+                                            <label for="ticket_grp" string="Team Name" class="col-3 col-lg-3 o_light_label"/>
+                                            <field name="ticket_grp" domain="[('type','=', 'qweb')]" class="oe_inline"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>
