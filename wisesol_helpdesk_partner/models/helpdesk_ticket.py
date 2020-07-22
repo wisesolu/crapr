@@ -16,3 +16,9 @@ class HelpdeskTicket(models.Model):
                     if partners:
                         oldest = partners.sorted(key='age', reverse=True)[0]
                         self.partner_id = oldest
+
+    @api.onchange('message_ids')
+    def _onchange_message_ids(self):
+        if self.team_id.name == self.env['ir.config_parameter'].sudo().get_param('team_name'):
+            self.find_partner()
+        return 
