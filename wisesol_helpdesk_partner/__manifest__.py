@@ -22,7 +22,6 @@
     'license': 'OEEL-1',
     'depends': ['helpdesk'],
     'data': [
-        'data/actions.xml',
         'views/res_config_settings_views.xml'   
     ]
 }
