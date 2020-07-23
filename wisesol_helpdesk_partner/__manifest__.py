@@ -18,7 +18,7 @@
     'author': "Odoo Inc",
     'website': "http://www.odoo.com",
     'category': 'Custom Developmemt',
-    'version': '0.1',
+    'version': '1.0',
     'license': 'OEEL-1',
     'depends': ['helpdesk'],
     'data': [
