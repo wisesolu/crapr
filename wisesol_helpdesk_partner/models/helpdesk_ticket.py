@@ -8,7 +8,7 @@ class HelpdeskTicket(models.Model):
 
     def find_partner(self):
         for msg in self.message_ids:
-            emails = self.env['ir.config_parameter'].sudo().get_param('voip_email').split()
+            emails = self.env['ir.config_parameter'].sudo().get_param('voip_email').split(",")
             for email in emails:
                 if msg.author_id.name == email:
                     r = re.compile(r'\D\d{10}\D')
