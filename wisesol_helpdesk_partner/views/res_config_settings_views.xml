@@ -15,7 +15,7 @@
                                 <div class="o_setting_right_pane">
                                     <span class="o_form_label">VOIP Email</span>
                                     <div class="text-muted">
-                                        Email that's searched for in helpdesk tickets
+                                        Emails that are searched for in helpdesk tickets (Emails MUST be separated by commas)
                                     </div>
                                     <div class="content-group">
                                         <div class="mt16 row">
