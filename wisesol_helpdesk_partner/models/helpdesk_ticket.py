@@ -1,18 +1,26 @@
 # -*- coding: utf-8 -*-
 
 from odoo import models, fields, api
-import re
+import re, logging
+
+_logger = logging.getLogger(__name__)
 
 class HelpdeskTicket(models.Model):
     _inherit = 'helpdesk.ticket'
 
     def find_partner(self):
-        for msg in self.message_ids:
-            if msg.author_id.name == self.env['ir.config_parameter'].sudo().get_param('voip_email'):
-                r = re.compile(r'(\d{3}[-\.\s]??\d{3}[-\.\s]??\d{4}|\(\d{3}\)\s*\d{3}[-\.\s]??\d{4}|\d{3}[-\.\s]??\d{4})')
+        msg = self.message_ids.sorted(key='create_date', reverse=True)[0]
+        emails = self.env['ir.config_parameter'].sudo().get_param('voip_email').split(",")
+        for email in emails:
+            if msg.author_id.email_normalized == email:
+                r = re.compile(r'\D\d{10}\D')
                 results = r.findall(msg.body)
                 if results:
-                    partners = self.env['res.partner'].search([('phone', 'like', '{}%{}%{}'.format(results[0][0:2],results[0][3:5],results[0][6:9]))])
+                    partners = self.env['res.partner'].search([('phone', 'like', '{}%{}%{}'.format(results[0][1:4],results[0][4:7],results[0][7:11]))])
+                    default_partner = self.env['res.partner'].search([('name', '=', 'alianza@opmits.com')])
                     if partners:
-                        oldest = partners.sorted(key='age', reverse=True)[0]
+                        oldest = partners.sorted(key='x_studio_age', reverse=True)[0]
                         self.partner_id = oldest
+                        self.partner_email = oldest.email
+                    else:
+                        self.partner_id = default_partner.id
