@@ -9,7 +9,7 @@ class HelpdeskTicket(models.Model):
     _inherit = 'helpdesk.ticket'
 
     def find_partner(self):
-        if self.message_ids.sorted(key='create_date', reverse=True) and self.env['ir.config_parameter'].sudo().get_param('voip_email').split(","):
+        if self.message_ids.sorted(key='create_date', reverse=True) and self.env['ir.config_parameter'].sudo().get_param('voip_email'):
             msg = self.message_ids.sorted(key='create_date', reverse=True)[0]
             emails = self.env['ir.config_parameter'].sudo().get_param('voip_email').split(",")
             for email in emails:
