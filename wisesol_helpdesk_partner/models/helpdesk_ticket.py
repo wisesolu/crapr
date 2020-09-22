@@ -20,7 +20,7 @@ class HelpdeskTicket(models.Model):
                         partners = self.env['res.partner'].search([('phone', 'like', '{}%{}%{}'.format(results[0][1:4],results[0][4:7],results[0][7:11]))])
                         default_partner = self.env['res.partner'].search([('name', '=', 'alianza@opmits.com')])
                         if partners:
-                            oldest = partners.sorted(key='x_studio_edad', reverse=True)[0]
+                            oldest = partners.sorted(key='x_studio_age', reverse=True)[0]
                             self.partner_id = oldest
                             self.partner_email = oldest.email
                         else:
