@@ -9,7 +9,7 @@ class HelpdeskTicket(models.Model):
     _inherit = 'helpdesk.ticket'
 
     def find_partner(self):
-        if self.message_ids.sorted(key='create_date', reverse=True) and self.env['ir.config_parameter'].sudo().get_param('voip_email').split(","):
+        if self.message_ids.sorted(key='create_date', reverse=True) and self.env['ir.config_parameter'].sudo().get_param('voip_email'):
             msg = self.message_ids.sorted(key='create_date', reverse=True)[0]
             emails = self.env['ir.config_parameter'].sudo().get_param('voip_email').split(",")
             for email in emails:
@@ -20,7 +20,7 @@ class HelpdeskTicket(models.Model):
                         partners = self.env['res.partner'].search([('phone', 'like', '{}%{}%{}'.format(results[0][1:4],results[0][4:7],results[0][7:11]))])
                         default_partner = self.env['res.partner'].search([('name', '=', 'alianza@opmits.com')])
                         if partners:
-                            oldest = partners.sorted(key='x_studio_age', reverse=True)[0]
+                            oldest = partners.sorted(key='x_studio_edad', reverse=True)[0]
                             self.partner_id = oldest
                             self.partner_email = oldest.email
                         else:
