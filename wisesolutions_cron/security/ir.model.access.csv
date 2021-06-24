@@ -1,0 +1,2 @@
+id,name,model_id/id,group_id/id,perm_read,perm_write,perm_create,perm_unlink
+cron-access-all,cron-access,model_wise_backup,,1,1,1,1
