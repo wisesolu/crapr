@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="wise_backup_form" model="ir.ui.view">
+            <field name="name">wise.backup.form</field>
+            <field name="model">wise.backup</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="SFTP Backup View">
+                    <sheet>
+                        <group>
+                            <h1>
+                                <field name="backup_name"/>
+                            </h1>
+                        </group>
+                        <group name="backup_config">
+                            <field name="backup_dir"/>
+                            <field name="sftp_host"/>
+                            <field name="sftp_port"/>
+                            <field name="sftp_user"/>
+                            <field name="sftp_pass" password="True"/>
+                            <field name="sftp_dir"/>
+                            <field name="sftp_del"/>
+                        </group>
+                        <button name="test_connection" type="object" string="Test SFTP Connection"/>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        <record id="wise_backup_tree" model="ir.ui.view">
+            <field name="name">wise.backup.tree</field>
+            <field name="model">wise.backup</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Backups">
+                    <field name="backup_name"/>
+                    <field name="backup_dir"/>
+                    <field name="sftp_host"/>
+                    <field name="sftp_port"/>
+                    <field name="sftp_user"/>
+                </tree>
+            </field>
+        </record>
+        <record id="wise_backup_action" model="ir.actions.act_window">
+            <field name="name">Manage Backups</field>
+            <field name="res_model">wise.backup</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="wise_backup_tree"/>
+        </record>
+        <menuitem id="wise_backup_menu" name="SFTP Back-Ups" parent="base.menu_custom"/>
+        <menuitem id="wise_backup_submenu" parent="wise_backup_menu" action="wise_backup_action"/>
+    </data>
+</odoo>
