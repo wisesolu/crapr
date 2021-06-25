@@ -8,6 +8,7 @@ import ipaddress
 import logging
 import fnmatch
 import paramiko
+import shutil
 
 
 _log = logging.getLogger(__name__)
@@ -17,6 +18,7 @@ class Backup(models.Model):
     _description = 'Daily Cron backup'
     _rec_name = 'backup_name'
 
+    demo_mode = fields.Boolean(string='Demo Mode', default=False)
     backup_name = fields.Char(string='Backup Name', required=True)
     backup_dir = fields.Char(string='Odoo Daily Backup Directory', default = '/home/odoo/backup.daily/')
     backup_time = fields.Float(string='Previous Backup Time')
@@ -24,7 +26,7 @@ class Backup(models.Model):
     sftp_host = fields.Char(string='SFTP Host', required=True, default='localhost')
     sftp_port = fields.Integer(string='SFTP Port', required=True, default=22)
     sftp_user = fields.Char(string='SFTP Username', required=True)
-    sftp_pass = fields.Char(string='SFTP Password', required=True) # TODO: Ask if there's any way to avoid saving plaintext pwd to db
+    sftp_pass = fields.Char(string='SFTP Password', required=True)
     sftp_dir = fields.Char(string='SFTP Backup Directory', required=True)
     sftp_del = fields.Boolean(string='Delete previous backups on SFTP', default=False)
 
@@ -40,14 +42,43 @@ class Backup(models.Model):
                     ipaddress.ip_address(rec.sftp_host)
                 except:
                     raise ValidationError(_('Invalid IP Address for SFTP Host'))
+    # '''
+    # Make sure that backup_dir exists to help user with
+    # troubleshooting
+    # '''
+    # @api.constrains('backup_dir')
+    # def _ensure_valid_dir(self):
+    #     for rec in self:
+    #         if not os.path.exists(rec.backup_dir) and not rec.demo_mode:
+    #             raise ValidationError(_('Invalid Odoo Daily Backup Directory'))
+    
+    @api.model_create_multi
+    def create(self, vals_list):
+        new_backups = super(Backup, self).create(vals_list)
+        for backup in new_backups:
+            if backup.demo_mode:
+                demo_cwd = '/home/odoo/backup.daily.test'
+                backup._create_demo_data(demo_cwd)
+                backup.backup_dir = demo_cwd
+        return new_backups
+
     '''
-    Make sure that backup_dir exists to help user with
-    troubleshooting
+    If demo_mode is changed to true, change the the backup_dir to the
+    demo directory, and make the directory if it doesn't exist
     '''
-    @api.constrains('backup_dir')
-    def _ensure_valid_dir(self):
-        if not os.path.exists(self.backup_dir):
-            raise ValidationError(_('Invalid Odoo Daily Backup Directory'))
+    def write(self, vals):
+        if 'demo_mode' in vals:
+            demo_cwd = '/home/odoo/backup.daily.test'
+            if vals['demo_mode']:
+                self._create_demo_data(demo_cwd)
+                self.backup_dir = demo_cwd
+            else:
+                self._delete_demo_data(demo_cwd)
+                self.backup_dir = '/home/odoo/backup.daily'
+        
+        return super(Backup, self).write(vals)
+    
+    
     '''
     Action that tests if sftp connection is valid. Raises a Warning
     popup that shows whether the connection is successful or not.
@@ -60,7 +91,7 @@ class Backup(models.Model):
             ssh.open_sftp()
             popup_msg = 'Don\'t worry, nothing went wrong. Successfully connected to remote SFTP'
             ssh.close()
-        raise Warning(_(popup_msg)) #TODO: Ask if we can have a message other than 'warning' since it's kinda counterintuitive
+        raise Warning(_(popup_msg))
 
     '''
     This function will run every 5 minutes via a scheduled action. It checks 
@@ -77,8 +108,16 @@ class Backup(models.Model):
             if not os.path.exists(rec.backup_dir):
                 _log.critical(f'The folder {rec.backup_dir} does not exist')
                 continue
+            
             '''
-                If rec.backup_time == 0, then there was never a backup made
+            If demo_mode is enabled, then delete the old
+            backup and make a new one
+            '''
+            if rec.demo_mode:
+                rec._refresh_demo_data()
+
+            '''
+            If rec.backup_time == 0, then there was never a backup made
             '''
             if rec.backup_time == 0 or rec.backup_time != os.path.getmtime(rec.backup_dir):
                 try:
@@ -194,3 +233,27 @@ class Backup(models.Model):
             else:
                 sftp.remove(filepath)
         sftp.rmdir(path)
+
+    def _refresh_demo_data(self):
+        if self.demo_mode:
+            self._delete_demo_data(self.backup_dir)
+            self._create_demo_data(self.backup_dir)
+
+    def _create_demo_data(self, test_folder_pwd):
+        try:
+            os.mkdir(test_folder_pwd)
+            os.chdir(test_folder_pwd)
+            with open('test_backup_sql.sql.gz', 'wb') as f:
+                f.seek(20048575)
+                f.write(b'\0')
+                f.close()
+            with open('test_backup_json.json', 'wb') as f:
+                f.seek(1048575)
+                f.write(b'\0')
+                f.close()
+        except Exception as e:
+            _log.critical(str(e))
+
+    def _delete_demo_data(self, test_folder_pwd):
+        if os.path.exists(test_folder_pwd):
+            shutil.rmtree(test_folder_pwd, ignore_errors=True)

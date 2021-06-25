@@ -14,7 +14,8 @@
                             </h1>
                         </group>
                         <group name="backup_config">
-                            <field name="backup_dir"/>
+                            <field name="demo_mode"/>
+                            <field name="backup_dir" attrs="{'readonly':[('demo_mode','=',True)]}"/>
                             <field name="sftp_host"/>
                             <field name="sftp_port"/>
                             <field name="sftp_user"/>
@@ -34,7 +35,8 @@
             <field name="arch" type="xml">
                 <tree string="Backups">
                     <field name="backup_name"/>
-                    <field name="backup_dir"/>
+                    <field name="demo_mode" invisible="1"/>
+                    <field name="backup_dir" attrs="{'readonly':[('demo_mode','=',True)]}"/>
                     <field name="sftp_host"/>
                     <field name="sftp_port"/>
                     <field name="sftp_user"/>
