@@ -21,7 +21,7 @@ class HelpdeskTicket(models.Model):
             if results:
                 partners = self.env['res.partner'].search([('phone', 'like', '{}%{}%{}'.format(results[0][0:3], results[0][3:6], results[0][6:10]))])
                 if partners:
-                    oldest = partners.sorted(key='age', reverse=True)[0]
+                    oldest = partners.sorted(key='create_date')[0]
                     return {'phone_lost': results[0], 'partner_id': oldest.id, 'partner_email': oldest.email}
                 else:
                     return {'phone_lost': results[0]}
