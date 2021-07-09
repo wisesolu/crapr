@@ -1,6 +1,7 @@
 # -*- coding:utf-8 -*-
 from odoo import api, fields, models, _
 from odoo.exceptions import ValidationError, Warning
+from datetime import datetime, timedelta
 from stat import S_ISDIR
 import os
 import time
@@ -13,6 +14,9 @@ import shutil
 
 _log = logging.getLogger(__name__)
 
+DEMO_DIR = '/home/odoo/backup.daily.test/'
+BACKUP_DIR = '/home/odoo/backup.daily/'
+
 class Backup(models.Model):
     _name = 'wise.backup'
     _description = 'Daily Cron backup'
@@ -20,8 +24,8 @@ class Backup(models.Model):
 
     demo_mode = fields.Boolean(string='Demo Mode', default=False)
     backup_name = fields.Char(string='Backup Name', required=True)
-    backup_dir = fields.Char(string='Odoo Daily Backup Directory', default = '/home/odoo/backup.daily/')
-    backup_time = fields.Float(string='Previous Backup Time')
+    backup_dir = fields.Char(string='Odoo Daily Backup Directory', default = BACKUP_DIR)
+    backup_time = fields.Datetime(string='Previous Backup Time')
 
     sftp_host = fields.Char(string='SFTP Host', required=True, default='localhost')
     sftp_port = fields.Integer(string='SFTP Port', required=True, default=22)
@@ -57,9 +61,8 @@ class Backup(models.Model):
         new_backups = super(Backup, self).create(vals_list)
         for backup in new_backups:
             if backup.demo_mode:
-                demo_cwd = '/home/odoo/backup.daily.test'
-                backup._create_demo_data(demo_cwd)
-                backup.backup_dir = demo_cwd
+                backup._create_demo_data(DEMO_DIR)
+                backup.backup_dir = DEMO_DIR
         return new_backups
 
     '''
@@ -68,16 +71,13 @@ class Backup(models.Model):
     '''
     def write(self, vals):
         if 'demo_mode' in vals:
-            demo_cwd = '/home/odoo/backup.daily.test'
             if vals['demo_mode']:
-                self._create_demo_data(demo_cwd)
-                self.backup_dir = demo_cwd
+                self._create_demo_data(DEMO_DIR)
+                self.backup_dir = DEMO_DIR
             else:
-                self._delete_demo_data(demo_cwd)
-                self.backup_dir = '/home/odoo/backup.daily'
-        
+                self._delete_demo_data(DEMO_DIR)
+                self.backup_dir = BACKUP_DIR
         return super(Backup, self).write(vals)
-    
     
     '''
     Action that tests if sftp connection is valid. Raises a Warning
@@ -110,19 +110,23 @@ class Backup(models.Model):
                 continue
             
             '''
-            If demo_mode is enabled, then delete the old
-            backup and make a new one
+            If demo_mode is enabled check the time of the last
+            demo backup made. if rec.demo_time == 0, then a demo
+            backup has never been made, so create the first one. 
+            Also, if rec.demo_time + 1 day > right now, create new
+            fake data to simulate a daily backup
             '''
             if rec.demo_mode:
-                rec._refresh_demo_data()
+                if rec.backup_time == 0 or rec.backup_time + timedelta(days=1) < datetime.now():
+                    rec._refresh_demo_data()
 
             '''
             If rec.backup_time == 0, then there was never a backup made
             '''
-            if rec.backup_time == 0 or rec.backup_time != os.path.getmtime(rec.backup_dir):
+            if rec.backup_time == 0 or rec.backup_time != datetime.strptime(time.ctime(os.path.getmtime(rec.backup_dir)), '%a %b %d %H:%M:%S %Y'):
                 try:
                     old_backup_time = rec.backup_time
-                    rec.backup_time = os.path.getmtime(rec.backup_dir)
+                    rec.backup_time = datetime.strptime(time.ctime(os.path.getmtime(rec.backup_dir)), '%a %b %d %H:%M:%S %Y')
                     sql_file_name, json_file_name = rec._prepare_backup()
                     rec._transfer_backup(sql_file_name, json_file_name)
                 except Exception as e:
@@ -172,7 +176,7 @@ class Backup(models.Model):
             self._delete_old_backups(sftp)
         try:
             sftp.chdir(self.sftp_dir)
-            backup_folder_name = f'backup_{time.strftime("%Y_%m_%d_%H_%M_%S")}'
+            backup_folder_name = f'backup_{time.strftime("%Y_%m_%d")}'
             sftp.mkdir(backup_folder_name)
             sftp.chdir(backup_folder_name)
             sftp.put(json_file, 'json_metadata.json')
